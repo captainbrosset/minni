@@ -1,0 +1,23 @@
+{
+  "name":         "minni",
+  "description":  "Minimalistic Command Line Todo list",
+  "keywords":     ["todo", "list", "todo-list", "command-line"],
+  "author":       "Benoit Charbonnier <benoit.charbonnier@gmail.com>",
+  "version":      "0.0.1",
+  "homepage":     "http://github.com/bcharbonnier/minni",
+  "bugs":         "https://github.com/bcharbonnier/minni/issues",
+  "engines":      {
+    "node":       "~0.6.7"
+  },
+  "bin":          {
+    "minni":     "./bin/minni"
+  },
+  "repository":   {
+    "type": "git",
+    "url": "git://github.com/bcharbonnier/minni.git"
+  },
+  "dependencies": {
+    "colors": "",
+    "coffee-script": ""
+  }
+}
