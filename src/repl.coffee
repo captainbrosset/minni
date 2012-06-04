@@ -7,7 +7,7 @@ stdout = process.stdout
 
 # Require **Minni** module.
 Minni        = require './minni'
-todoList     = new Minni("#{__dirname}/../../minni.txt")
+todoList     = new Minni("#{process.cwd()}/.minni")
 
 set_prompt = ->
   name = todoList.get_name()
@@ -23,7 +23,7 @@ clear_screen = ->
 
 # Make sure that uncaught exceptions don't kill the REPL.
 process.on 'uncaughtException', (e) ->
-  #console.log e
+  #console.log e, e.stack
   repl.prompt()
 
 ## Autocompletion

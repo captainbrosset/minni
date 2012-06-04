@@ -1,5 +1,6 @@
 fs    = require 'fs'
-List   = require './list'
+List  = require './list'
+Item  = require './item'
 
 # The current Minni version number.
 exports.VERSION = '0.0.1'
@@ -10,23 +11,32 @@ Todo = class Todo
 
   load: ->
     lines = fs.readFileSync(@file, 'utf8');
-    [@name, items, done] = lines.split(Todo.separotor)
+    [@name, items] = lines.split(Todo.TASKS_SEP)
     @name = @name.replace /[\r\n]+$/, ''
-    @items = new List(items.split('\n'))
-    @done = new List(done.split('\n'))
+    @todo = new List()
+    @done = new List()
+    for item in items.split('\n') when item isnt ''
+      task = new Item(item)
+      if task.is_done()
+        @done.add task
+      else
+        @todo.add task
 
   save: ->
     fs.writeFileSync(@file, @get_content(), 'utf8')
+
+  reload: ->
+    @load()
+    "Tasks list reloaded".green
 
   get_name: ->
     @name
 
   get_content: ->
     """#{@name}
-    #{Todo.separotor}
-    #{@items}
-    #{Todo.separotor}
-    #{@done}
+    #{Todo.TASKS_SEP}
+    #{@todo.toFile()}
+    #{@done.toFile()}
     """
 
   process_command: (buffer) ->
@@ -34,7 +44,9 @@ Todo = class Todo
     [action, args...] = buffer.split(" ")
     args = args.join(" ")
     result = switch action
-      when "help"
+      when "reload", "R"
+        @reload()
+      when "help", "h"
         Todo.help
       when "add", "a"
         @add_item args
@@ -44,25 +56,48 @@ Todo = class Todo
         @list_items()
       when "listall", "la"
         @list_all_items()
-      when "rename"
+      when "done", "d"
+        @mark_as_done args
+      when "rename", "ren"
         @rename args
+      when "tag", "t"
+        @tag args
+      when "prio", "p"
+        @priority args
       else
+        @send_response ''
         #@send_response "Unknown command:".red, action.grey
     @send_response result
 
+  mark_as_done: (index) ->
+    index = parseInt(index, 10) - 1;
+    task = @todo.get index
+    task.mark_as_done()
+    @todo.removeAt index
+    @done.add task
+    @save()
+    "Task sucessfully marked as done".grey
+
   remove_item: (index) ->
-    @items.remove index
+    index = parseInt(index, 10) - 1;
+    @todo.remove index
+    @save()
+    "Task sucessfully deleted".grey
 
   add_item: (item_name) ->
-    @items.add item_name
+    @todo.add item_name
+    @save()
+    "New task sucessfully created".grey
 
   list_all_items: ->
-    result = @list_items()
+    result = "Ongoing\n".bold
+    result += @list_items()
+    result += "\nDone\n".bold
     result += @done.toString()
     result
 
   list_items: ->
-    @items.toString()
+    @todo.toString()
 
   rename: (new_name) ->
     old = @name
@@ -70,28 +105,47 @@ Todo = class Todo
     @save()
     "'#{old}' has been renamed to '#{@name}'"
 
+  tag: (args) ->
+    [index, tags...] = args.split(" ")
+    index = parseInt(index, 10) - 1
+    task = @todo.get index
+    for tag in tags
+      task.add_tag tag
+    @save()
+    "#{tags.length} Tag(s) successfully added"
+
+  priority: (args) ->
+    [index, prio, trash...] = args.split(" ")
+    index = parseInt(index, 10) - 1
+    prio = parseInt(prio, 10)
+    task = @todo.get index
+    task.set_priority prio
+    @todo.sort_by_prio()
+    @save()
+    "Priority successfully updated"
+
   send_response: (text...) ->
     text = text.join(' ')
-    return text+'\n' if text[-1..] isnt '\n'
+    return text+'\n' if text[-1..] isnt '\n' and text isnt ''
     text
 
 module.exports = Todo
 
 
-Todo.separotor = '================================================================================'
+Todo.TASKS_SEP = '================================================================================'
+Todo.LIST_SEP = '--------------------------------------------------------------------------------'
 
-Todo.help = """
-
-Minni - Minimalistic Command Line Todo List
-Usage:
-  help, h
-      Displays this help content
-  add, a
-      Add a task to the list
-  remane, r
-      Renames the list
-  list, l
-      Displays all tasks
-
-
-"""
+Todo.help = [
+  "",
+  "Minni - Minimalistic Command Line Todo List",
+  "  Usage:",
+  "  help, h".bold,
+  "\tDisplays this help content",
+  "  add, a".bold,
+  "\tAdd a task to the list",
+  "  remane, r".bold,
+  "\tRenames the list",
+  "  list, l".bold,
+  "\tDisplays all tasks",
+  ""
+].join('\n')

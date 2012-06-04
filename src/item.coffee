@@ -12,8 +12,10 @@ class Item
     [status, task...] = text[3..].split(' ')
     for split in task
       switch split[0]
+        when '('
+          @priority = parseInt(split[1...], 10)
         when '#'
-          @done = split
+          @done = split[1..]
         when '+'
           @add_tag(split[1..])
         else
@@ -25,19 +27,40 @@ class Item
 
   mark_as_done: ->
     @done = dateFormat(new Date(), "yyyy-mm-dd")
+    @priority = 0
 
   add_tag: (tag) ->
     tag = tag.split(" ").join("-")
     return if tag in @tags
     @tags.push tag
 
-  toString: ->
-    str = if @done "[x]" else "[ ]"
+  set_priority: (@priority = 0) ->
+
+  toFile: ->
+    str = if @done then "[x]" else "[ ]"
+    if @priority > 0
+      str += " (#{@priority})"
     str += " #{@task} "
-    if @done
+    if @done isnt false
       str += " ##{@done} "
     if @tags.length > 0
-      str += " +#{tag}" for tag in @tags
+      for tag in @tags
+        str += " +#{tag}"
+    str
+
+  toString: ->
+    #str = if @done then "[x]" else "[ ]"
+    str = ''
+    str += "#{@task} "
+    if @done isnt false
+      str += " ##{@done} ".green
+    if @tags.length > 0
+      for tag in @tags
+        str += " +#{tag}".cyan
+    return str.yellow if @priority is 1
+    return str.yellow.bold if @priority is 2
+    return str.red if @priority is 3
+    return str.red.bold if @priority is 4
     str
 
 module.exports = Item

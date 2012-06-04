@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "colors": "",
-    "coffee-script": ""
+    "coffee-script": "",
+    "dateformat": ""
   }
 }
