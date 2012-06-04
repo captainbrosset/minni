@@ -1,3 +1,5 @@
+readline    = require 'readline'
+inspect     = require('util').inspect
 
 # Start by opening up `stdin` and `stdout`.
 stdin = process.openStdin()
@@ -5,18 +7,24 @@ stdout = process.stdout
 
 # Require **Minni** module.
 Minni        = require './minni'
-readline     = require 'readline'
+todoList     = new Minni("#{__dirname}/../../minni.txt")
 
-# REPL Setup
-# Config
-REPL_PROMPT = 'minni> '
+set_prompt = ->
+  name = todoList.get_name()
+  length = "minni (#{name})> ".length
+  colored_name = name.yellow.bold
+  prompt = "minni (#{colored_name})> "
+  repl.setPrompt "minni (#{colored_name})> ", length
 
-# Log an error
-error = (err) ->
-  stdout.wite (err.stack or err.toString()) + '\n'
+clear_screen = ->
+  stdout.write '\u001B[2J\u001B[0;0f'
+  set_prompt()
+  repl.prompt()
 
 # Make sure that uncaught exceptions don't kill the REPL.
-process.on 'uncaughtException', error
+process.on 'uncaughtException', (e) ->
+  #console.log e
+  repl.prompt()
 
 ## Autocompletion
 # Returns a list of completions, and the completed text.
@@ -37,48 +45,25 @@ run = (buffer) ->
     repl.close()
     return
 
-  repl.setPrompt REPL_PROMPT
-  Minni.exec buffer
+  result = todoList.process_command buffer
+
+  set_prompt()
+  repl.output.write result
   repl.prompt()
 
-if stdin.readable and stdin.isRaw
-  # handle piped input
-  pipedInput = ''
-  repl =
-    prompt: -> stdout.write @_prompt
-    setPrompt: (p) -> @_prompt = p
-    input: stdin
-    output: stdout
-    on: ->
-  stdin.on 'data', (chunk) ->
-    pipedInput += chunk
-    return unless /\n/.test pipedInput
-    lines = pipedInput.split "\n"
-    pipedInput = lines[lines.length - 1]
-    for line in lines[...-1] when line
-      stdout.write "#{line}\n"
-      run line
-    return
-  stdin.on 'end', ->
-    for line in pipedInput.trim().split "\n" when line
-      stdout.write "#{line}\n"
-      run line
-    stdout.write '\n'
-    process.exit 0
+# Create the REPL by listening to **stdin**.
+if readline.createInterface.length < 3
+  repl = readline.createInterface stdin, autocomplete
+  stdin.on 'data', (buffer) -> repl.write buffer
 else
-  # Create the REPL by listening to **stdin**.
-  if readline.createInterface.length < 3
-    repl = readline.createInterface stdin, autocomplete
-    stdin.on 'data', (buffer) -> repl.write buffer
-  else
-    repl = readline.createInterface stdin, stdout, autocomplete
+  repl = readline.createInterface stdin, stdout, autocomplete
 
 repl.on 'close', ->
-  repl.output.write '\n\n'
-  repl.output.write 'Bye, have a nice day!\n\n'
+  repl.output.write '\n'
+  repl.output.write 'Bye, have a nice day!\n'.green
   repl.input.destroy()
 
 repl.on 'line', run
 
-repl.setPrompt REPL_PROMPT
+set_prompt()
 repl.prompt()
