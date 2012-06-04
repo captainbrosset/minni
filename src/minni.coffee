@@ -90,7 +90,7 @@ Todo = class Todo
 
   remove_item: (index) ->
     index = parseInt(index, 10) - 1;
-    @todo.remove index
+    @todo.removeAt index
     @save()
     "Task sucessfully deleted".grey
 
