@@ -1,6 +1,7 @@
-fs    = require 'fs'
-List  = require './list'
-Item  = require './item'
+fs      = require 'fs'
+List    = require './list'
+Item    = require './item'
+Watcher = require './watcher'
 
 # The current Minni version number.
 exports.VERSION = '0.0.1'
@@ -8,6 +9,10 @@ exports.VERSION = '0.0.1'
 Todo = class Todo
   constructor: (@file) ->
     @load()
+    @watcher = new Watcher @file, @onExternalFileChange.bind(this)
+
+  onExternalFileChange: ->
+    @reload()
 
   load: ->
     try
@@ -33,7 +38,9 @@ Todo = class Todo
     @save()
 
   save: ->
+    @watcher.pause()
     fs.writeFileSync(@file, @get_content(), 'utf8')
+    @watcher.resume()
 
   reload: ->
     @load()

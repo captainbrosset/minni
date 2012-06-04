@@ -59,6 +59,7 @@ else
   repl = readline.createInterface stdin, stdout, autocomplete
 
 repl.on 'close', ->
+  todoList.watcher.stop()
   repl.output.write '\n'
   repl.output.write 'Bye, have a nice day!\n'.green
   repl.input.destroy()
