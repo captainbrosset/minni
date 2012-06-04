@@ -10,6 +10,10 @@ Todo = class Todo
     @load()
 
   load: ->
+    try
+      fs.statSync(@file)
+    catch error
+      @init()
     lines = fs.readFileSync(@file, 'utf8');
     [@name, items] = lines.split(Todo.TASKS_SEP)
     @name = @name.replace /[\r\n]+$/, ''
@@ -21,6 +25,12 @@ Todo = class Todo
         @done.add task
       else
         @todo.add task
+
+  init: ->
+    @name = "My todo list"
+    @todo = new List()
+    @done = new List()
+    @save()
 
   save: ->
     fs.writeFileSync(@file, @get_content(), 'utf8')
