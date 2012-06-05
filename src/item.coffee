@@ -48,19 +48,4 @@ class Item
         str += " +#{tag}"
     str
 
-  toString: ->
-    #str = if @done then "[x]" else "[ ]"
-    str = ''
-    str += "#{@task} "
-    if @done isnt false
-      str += " ##{@done} ".green
-    if @tags.length > 0
-      for tag in @tags
-        str += " +#{tag}".cyan
-    return str.yellow if @priority is 1
-    return str.yellow.bold if @priority is 2
-    return str.red if @priority is 3
-    return str.red.bold if @priority is 4
-    str
-
 module.exports = Item

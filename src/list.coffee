@@ -1,3 +1,4 @@
+formatter = require './formatter'
 Item = require './item'
 
 List = class List
@@ -34,17 +35,6 @@ List = class List
     str
 
   toString: ->
-    #TODO This is method is way too crappy, refactor needed
-    length = @tasks.length
-    count = 0
-    str = ''
-    for item in @tasks
-      count++
-      str += "#{count} ".yellow
-      str += item.toString()
-      str += '\n'
-    str += "#{count} of #{length} tasks shown".bold if count isnt length
-    str
-
+    formatter.formatList this
 
 module.exports = List
